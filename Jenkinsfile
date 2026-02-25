@@ -5,38 +5,47 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'pip install pytest pytest-cov'
+                sh 'pip install pytest junitparser'
+                sh 'mkdir -p reports'
             }
         }
 
-        stage('Run Smoke Tests') {
-            steps {
-                sh 'pytest -m smoke --junitxml=reports/smoke-results.xml'
+        stage('Run Tests in Parallel') {
+            parallel {
+                stage('Smoke') {
+                    steps {
+                        sh 'pytest -m smoke --junitxml=reports/smoke.xml'
+                    }
+                }
+                stage('Slow') {
+                    steps {
+                        sh 'pytest -m slow --junitxml=reports/slow.xml'
+                    }
+                }
+                stage('Security') {
+                    steps {
+                        sh 'pytest -m security --junitxml=reports/security.xml'
+                    }
+                }
             }
         }
 
-        stage('Run Slow Tests') {
-            steps {
-                sh 'pytest -m slow --junitxml=reports/slow-results.xml'
-            }
-        }
-
-        stage('Run Security Tests') {
-            steps {
-                sh 'pytest -m security --junitxml=reports/security-results.xml'
-            }
-        }
-
-        stage('Publish Test Results') {
+        stage('Publish JUnit Results') {
             steps {
                 junit 'reports/*.xml'
             }
         }
-    }
 
-    post {
-        always {
-            archiveArtifacts artifacts: 'reports/*.xml', fingerprint: true
+        stage('Generate HTML Dashboard') {
+            steps {
+                sh 'python dashboard.py'
+            }
+        }
+
+        stage('Archive Dashboard') {
+            steps {
+                archiveArtifacts artifacts: 'dashboard/summary.html', fingerprint: true
+            }
         }
     }
 }
