@@ -13,7 +13,7 @@ pipeline {
             }
         }
 
-        stage('Setup Python') {
+        stage('Setup Environment') {
             steps {
                 sh '''
                     ${PYTHON} -m venv venv
@@ -24,12 +24,49 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+        stage('Run Tests in Parallel') {
+            parallel {
+
+                stage('Smoke Tests') {
+                    steps {
+                        sh '''
+                            . venv/bin/activate
+                            pytest -m smoke -n auto \
+                            --cov=calculator \
+                            --cov-report=xml \
+                            --cov-report=html \
+                            --junitxml=reports/smoke.xml
+                        '''
+                    }
+                }
+
+                stage('Security Tests') {
+                    steps {
+                        sh '''
+                            . venv/bin/activate
+                            pytest -m security -n auto \
+                            --junitxml=reports/security.xml
+                        '''
+                    }
+                }
+
+                stage('Slow Tests') {
+                    steps {
+                        sh '''
+                            . venv/bin/activate
+                            pytest -m slow -n auto \
+                            --junitxml=reports/slow.xml
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Coverage Check') {
             steps {
                 sh '''
                     . venv/bin/activate
-                    mkdir -p reports
-                    pytest -v --junitxml=reports/results.xml
+                    coverage xml
                 '''
             }
         }
@@ -37,7 +74,26 @@ pipeline {
 
     post {
         always {
-            junit 'report.xml'
+            junit 'reports/*.xml'
+
+            publishHTML(target: [
+                reportDir: 'htmlcov',
+                reportFiles: 'index.html',
+                reportName: 'Coverage Report'
+            ])
+        }
+
+        success {
+            script {
+                def coverage = sh(
+                    script: ". venv/bin/activate && coverage report | grep TOTAL | awk '{print \$4}' | sed 's/%//'",
+                    returnStdout: true
+                ).trim()
+
+                if (coverage.toInteger() < 80) {
+                    error "Build failed: Coverage below 80% (Current: ${coverage}%)"
+                }
+            }
         }
     }
 }
