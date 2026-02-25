@@ -10,20 +10,13 @@ pipeline {
 
         stage('Run Tests with Coverage') {
             steps {
-                sh 'pytest --cov=. --cov-report=html --cov-report=term --cov-fail-under=80'
+                sh 'pytest --cov=. --cov-report=xml --cov-report=term --cov-fail-under=80'
             }
         }
 
-        stage('Publish HTML Report') {
+        stage('Coverage Report') {
             steps {
-                publishHTML([
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: 'htmlcov',
-                    reportFiles: 'index.html',
-                    reportName: 'Coverage Report'
-                ])
+                recordCoverage tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
             }
         }
     }
