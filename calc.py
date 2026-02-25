@@ -11,6 +11,24 @@ LIGHT_BLUE = "#CCEDFF"
 LIGHT_GRAY = "#F5F5F5"
 LABEL_COLOR = "#25265E"
 
+class CalculatorLogic:
+    def evaluate(self, expression):
+        try:
+            return str(eval(expression))
+        except:
+            return "Error"
+
+    def square(self, value):
+        try:
+            return str(float(value) ** 2)
+        except:
+            return "Error"
+
+    def sqrt(self, value):
+        try:
+            return str(float(value) ** 0.5)
+        except:
+            return "Error"
 
 class Calculator:
     def __init__(self):
@@ -165,3 +183,4 @@ class Calculator:
 if __name__ == "__main__":
     calc = Calculator()
     calc.run()
+
