@@ -28,7 +28,8 @@ pipeline {
             steps {
                 sh '''
                     . venv/bin/activate
-                    pytest --junitxml=report.xml
+                    mkdir -p reports
+                    pytest -v --junitxml=reports/results.xml
                 '''
             }
         }
