@@ -2,7 +2,11 @@ pipeline {
     agent any
 
     environment {
-        APP_PORT = "5000"
+        APP_PORT = "8080"
+    }
+
+    options {
+        timestamps()
     }
 
     stages {
@@ -13,38 +17,45 @@ pipeline {
             }
         }
 
+        stage('Prepare Directories') {
+            steps {
+                bat '''
+                if not exist reports mkdir reports
+                if not exist dashboard mkdir dashboard
+                '''
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
-                sh '''
+                bat '''
                 python -m pip install --upgrade pip
-                pip install pytest pytest-cov junitparser selenium webdriver-manager flask
-                mkdir -p reports
-                mkdir -p dashboard
+                pip install pytest pytest-cov selenium webdriver-manager flask
                 '''
             }
         }
 
-        stage('Start Calculator Application') {
+        stage('Start Calculator App') {
             steps {
-                sh '''
-                echo "Starting Calculator App..."
-                nohup python app.py > app.log 2>&1 &
-                sleep 5
+                bat '''
+                echo Starting Calculator App...
+                start /B python app.py
+                timeout /t 5
                 '''
             }
         }
 
-        stage('Run Tests in Parallel') {
+        stage('Run Tests') {
             parallel {
 
                 stage('Smoke Tests') {
                     steps {
-                        sh '''
-                        pytest -m smoke \
-                        --junitxml=reports/smoke.xml \
-                        --cov=. \
-                        --cov-report=xml:reports/coverage.xml \
-                        --cov-report=term \
+                        bat '''
+                        pytest -m smoke ^
+                        --junitxml=reports/smoke.xml ^
+                        --cov=. ^
+                        --cov-report=xml:reports/coverage.xml ^
+                        --cov-report=term ^
                         --cov-fail-under=80
                         '''
                     }
@@ -52,8 +63,8 @@ pipeline {
 
                 stage('Slow Tests') {
                     steps {
-                        sh '''
-                        pytest -m slow \
+                        bat '''
+                        pytest -m slow ^
                         --junitxml=reports/slow.xml
                         '''
                     }
@@ -61,8 +72,8 @@ pipeline {
 
                 stage('Security Tests') {
                     steps {
-                        sh '''
-                        pytest -m security \
+                        bat '''
+                        pytest -m security ^
                         --junitxml=reports/security.xml
                         '''
                     }
@@ -70,8 +81,8 @@ pipeline {
 
                 stage('UI Tests') {
                     steps {
-                        sh '''
-                        pytest tests/test_calc_ui.py \
+                        bat '''
+                        pytest tests/test_calculator_ui.py ^
                         --junitxml=reports/ui.xml
                         '''
                     }
@@ -79,46 +90,49 @@ pipeline {
             }
         }
 
-        stage('Publish JUnit Results') {
+        stage('Publish JUnit Reports') {
             steps {
                 junit 'reports/*.xml'
             }
         }
 
-        stage('Generate HTML Dashboard') {
+        stage('Generate Dashboard') {
             steps {
-                sh '''
+                bat '''
+                if not exist dashboard mkdir dashboard
                 python dashboard.py
+                dir dashboard
                 '''
             }
         }
 
-        stage('UI Verification Stage') {
+        stage('Verify Dashboard Exists') {
             steps {
                 script {
-                    echo "Verifying generated files..."
-
-                    if (!fileExists('reports/smoke.xml')) {
-                        error("Smoke report missing!")
-                    }
-
-                    if (!fileExists('reports/ui.xml')) {
-                        error("UI test report missing!")
-                    }
-
                     if (!fileExists('dashboard/summary.html')) {
-                        error("Dashboard not generated!")
+                        error("Dashboard summary.html NOT found!")
                     }
-
-                    echo "All reports verified successfully ✅"
                 }
             }
         }
 
-        stage('Archive Reports') {
+        stage('Publish HTML Report') {
             steps {
-                archiveArtifacts artifacts: 'dashboard/**', fingerprint: true
+                publishHTML(target: [
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'dashboard',
+                    reportFiles: 'summary.html',
+                    reportName: 'Calculator Test Dashboard'
+                ])
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
                 archiveArtifacts artifacts: 'reports/**', fingerprint: true
+                archiveArtifacts artifacts: 'dashboard/**', fingerprint: true
             }
         }
     }
@@ -126,7 +140,7 @@ pipeline {
     post {
 
         always {
-            echo "Build Finished"
+            echo "Build Completed"
         }
 
         success {
@@ -138,9 +152,9 @@ pipeline {
         }
 
         cleanup {
-            sh '''
-            echo "Stopping Calculator App..."
-            pkill -f app.py || true
+            bat '''
+            echo Stopping Python processes...
+            taskkill /F /IM python.exe 2>NUL
             '''
         }
     }
