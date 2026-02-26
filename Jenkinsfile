@@ -10,22 +10,7 @@ pipeline {
     }
 
     stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Prepare Directories') {
-            steps {
-                bat '''
-                if not exist reports mkdir reports
-                if not exist dashboard mkdir dashboard
-                '''
-            }
-        }
-
+        
         stage('Install Dependencies') {
             steps {
                 bat '''
