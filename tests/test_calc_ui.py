@@ -1,50 +1,55 @@
 import pytest
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
 import os
 
 @pytest.fixture(scope="module")
 def driver():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    service = Service()  # Assumes chromedriver in PATH
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
     file_path = os.path.abspath("calculator.html")
     driver.get("file:///" + file_path)
+
     yield driver
     driver.quit()
 
 def click_buttons(driver, buttons):
-    for btn in buttons:
-        driver.find_element(By.XPATH, f"//button[text()='{btn}']").click()
+    for b in buttons:
+        driver.find_element(By.ID, b).click()
 
 def get_display(driver):
     return driver.find_element(By.ID, "display").get_attribute("value")
 
 @pytest.mark.ui
-def test_addition(driver):
+def test_add(driver):
     click_buttons(driver, ["1", "+", "2", "="])
     assert get_display(driver) == "3"
 
 @pytest.mark.ui
-def test_subtraction(driver):
+def test_sub(driver):
     click_buttons(driver, ["5", "-", "3", "="])
     assert get_display(driver) == "2"
 
 @pytest.mark.ui
-def test_multiplication(driver):
+def test_mul(driver):
     click_buttons(driver, ["4", "*", "2", "="])
     assert get_display(driver) == "8"
 
 @pytest.mark.ui
-def test_division(driver):
+def test_div(driver):
     click_buttons(driver, ["8", "/", "2", "="])
     assert get_display(driver) == "4"
 
 @pytest.mark.ui
-def test_clear_button(driver):
+def test_clear(driver):
     click_buttons(driver, ["9", "+", "1"])
     driver.find_element(By.ID, "C").click()
     assert get_display(driver) == ""
