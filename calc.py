@@ -1,3 +1,5 @@
+import ast
+import operator
 import tkinter as tk
 
 LARGE_FONT_STYLE = ("Arial", 40, "bold")
@@ -12,23 +14,45 @@ LIGHT_GRAY = "#F5F5F5"
 LABEL_COLOR = "#25265E"
 
 class CalculatorLogic:
+
+    allowed_operators = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.Pow: operator.pow,
+        ast.USub: operator.neg
+    }
+
     def evaluate(self, expression):
         try:
-            return str(eval(expression))
-        except:
+            node = ast.parse(expression, mode='eval')
+            return str(self._evaluate(node.body))
+        except Exception:
             return "Error"
 
-    def square(self, value):
-        try:
-            return str(float(value) ** 2)
-        except:
-            return "Error"
+    def _evaluate(self, node):
+        if isinstance(node, ast.Constant):
+            return node.value
 
-    def sqrt(self, value):
-        try:
-            return str(float(value) ** 0.5)
-        except:
-            return "Error"
+        elif isinstance(node, ast.BinOp):
+            if type(node.op) not in self.allowed_operators:
+                raise ValueError("Operator not allowed")
+
+            left = self._evaluate(node.left)
+            right = self._evaluate(node.right)
+
+            return self.allowed_operators[type(node.op)](left, right)
+
+        elif isinstance(node, ast.UnaryOp):
+            if type(node.op) not in self.allowed_operators:
+                raise ValueError("Operator not allowed")
+
+            operand = self._evaluate(node.operand)
+            return self.allowed_operators[type(node.op)](operand)
+
+        else:
+            raise ValueError("Invalid expression")
 
 class Calculator:
     def __init__(self):
@@ -183,4 +207,5 @@ class Calculator:
 if __name__ == "__main__":
     calc = Calculator()
     calc.run()
+
 
