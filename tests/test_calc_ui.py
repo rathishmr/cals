@@ -2,96 +2,71 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import os
 import time
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def driver():
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=options
-    )
-    driver.get("http://localhost:5000")
+    service = Service()  # Assumes chromedriver is in PATH
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    # Open local dashboard file
+    file_path = os.path.abspath("dashboard.py")
+    driver.get("file:///" + file_path)
+
     yield driver
     driver.quit()
 
 
-# =========================
-# SMOKE TESTS
-# =========================
-
-@pytest.mark.smoke
-def test_addition_ui(driver):
-    driver.find_element(By.ID, "num1").send_keys("5")
-    driver.find_element(By.ID, "num2").send_keys("3")
-    Select(driver.find_element(By.ID, "operator")).select_by_value("+")
-    driver.find_element(By.ID, "calculate").click()
-    result = driver.find_element(By.ID, "result").text
-    assert result == "8"
+def click_buttons(driver, buttons):
+    for btn in buttons:
+        driver.find_element(By.ID, btn).click()
 
 
-@pytest.mark.smoke
-def test_subtraction_ui(driver):
-    driver.find_element(By.ID, "num1").send_keys("10")
-    driver.find_element(By.ID, "num2").send_keys("4")
-    Select(driver.find_element(By.ID, "operator")).select_by_value("-")
-    driver.find_element(By.ID, "calculate").click()
-    result = driver.find_element(By.ID, "result").text
-    assert result == "6"
+def get_display(driver):
+    return driver.find_element(By.ID, "display").get_attribute("value")
 
 
-# =========================
-# SLOW TESTS
-# =========================
-
-@pytest.mark.slow
-def test_large_number_addition(driver):
-    driver.find_element(By.ID, "num1").send_keys("9999999")
-    driver.find_element(By.ID, "num2").send_keys("1")
-    Select(driver.find_element(By.ID, "operator")).select_by_value("+")
-    driver.find_element(By.ID, "calculate").click()
-    result = driver.find_element(By.ID, "result").text
-    assert result == "10000000"
+# 1️⃣ Addition Test
+@pytest.mark.ui
+def test_addition(driver):
+    click_buttons(driver, ["1", "+", "2", "="])
+    assert get_display(driver) == "3"
 
 
-@pytest.mark.slow
-def test_multiple_operations_refresh(driver):
-    for _ in range(3):
-        driver.find_element(By.ID, "num1").clear()
-        driver.find_element(By.ID, "num2").clear()
-        driver.find_element(By.ID, "num1").send_keys("2")
-        driver.find_element(By.ID, "num2").send_keys("2")
-        Select(driver.find_element(By.ID, "operator")).select_by_value("*")
-        driver.find_element(By.ID, "calculate").click()
-        assert driver.find_element(By.ID, "result").text == "4"
+# 2️⃣ Subtraction Test
+@pytest.mark.ui
+def test_subtraction(driver):
+    click_buttons(driver, ["5", "-", "3", "="])
+    assert get_display(driver) == "2"
 
 
-# =========================
-# SECURITY TESTS
-# =========================
-
-@pytest.mark.security
-def test_script_injection(driver):
-    driver.find_element(By.ID, "num1").send_keys("<script>")
-    driver.find_element(By.ID, "num2").send_keys("5")
-    Select(driver.find_element(By.ID, "operator")).select_by_value("+")
-    driver.find_element(By.ID, "calculate").click()
-    result = driver.find_element(By.ID, "result").text
-    assert "error" in result.lower()
+# 3️⃣ Multiplication Test
+@pytest.mark.ui
+def test_multiplication(driver):
+    click_buttons(driver, ["4", "*", "2", "="])
+    assert get_display(driver) == "8"
 
 
-@pytest.mark.security
-def test_sql_injection(driver):
-    driver.find_element(By.ID, "num1").send_keys("1; DROP TABLE")
-    driver.find_element(By.ID, "num2").send_keys("2")
-    Select(driver.find_element(By.ID, "operator")).select_by_value("+")
-    driver.find_element(By.ID, "calculate").click()
-    result = driver.find_element(By.ID, "result").text
-    assert "error" in result.lower()
+# 4️⃣ Division Test
+@pytest.mark.ui
+def test_division(driver):
+    click_buttons(driver, ["8", "/", "2", "="])
+    assert get_display(driver) == "4"
+
+
+# 5️⃣ Clear Button Test
+@pytest.mark.ui
+def test_clear_button(driver):
+    click_buttons(driver, ["9", "+", "1"])
+    driver.find_element(By.ID, "C").click()
+    assert get_display(driver) == ""
