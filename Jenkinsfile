@@ -2,11 +2,8 @@ pipeline {
     agent any
 
     stages {
-
         stage('Verify Python') {
-            steps {
-                bat "python --version"
-            }
+            steps { bat "python --version" }
         }
 
         stage('Install Dependencies') {
@@ -21,14 +18,8 @@ pipeline {
         stage('Run Smoke Tests') {
             steps {
                 script {
-                    def status = bat(
-                        script: "python -m pytest tests/smoke_test.py --junitxml=smoke-results.xml",
-                        returnStatus: true
-                    )
-
-                    if (status != 0) {
-                        unstable("Smoke tests failed")
-                    }
+                    def status = bat(script: "python -m pytest tests/smoke_test.py --junitxml=smoke-results.xml", returnStatus: true)
+                    if (status != 0) { unstable("Smoke tests failed") }
                 }
             }
         }
@@ -36,14 +27,8 @@ pipeline {
         stage('Run Security Tests') {
             steps {
                 script {
-                    def status = bat(
-                        script: "python -m pytest tests/security_test.py --junitxml=security-results.xml",
-                        returnStatus: true
-                    )
-
-                    if (status != 0) {
-                        unstable("Security tests failed")
-                    }
+                    def status = bat(script: "python -m pytest tests/security_test.py --junitxml=security-results.xml", returnStatus: true)
+                    if (status != 0) { unstable("Security tests failed") }
                 }
             }
         }
@@ -51,14 +36,8 @@ pipeline {
         stage('Run Slow Tests') {
             steps {
                 script {
-                    def status = bat(
-                        script: "python -m pytest tests/slow_test.py --junitxml=slow-results.xml",
-                        returnStatus: true
-                    )
-
-                    if (status != 0) {
-                        unstable("Slow tests failed")
-                    }
+                    def status = bat(script: "python -m pytest tests/slow_test.py --junitxml=slow-results.xml", returnStatus: true)
+                    if (status != 0) { unstable("Slow tests failed") }
                 }
             }
         }
@@ -66,14 +45,8 @@ pipeline {
         stage('Run UI Tests') {
             steps {
                 script {
-                    def status = bat(
-                        script: "python -m pytest tests/test_calc_ui.py --junitxml=ui-results.xml",
-                        returnStatus: true
-                    )
-
-                    if (status != 0) {
-                        unstable("UI tests failed")
-                    }
+                    def status = bat(script: "python -m pytest tests/test_calc_ui.py --junitxml=ui-results.xml", returnStatus: true)
+                    if (status != 0) { unstable("UI tests failed") }
                 }
             }
         }
@@ -82,20 +55,8 @@ pipeline {
     post {
         always {
             junit '*.xml'
-
             script {
                 echo "======================================"
-
-                if (currentBuild.currentResult == 'SUCCESS') {
-                    echo "BUILD SUCCESS - ALL TESTS PASSED"
-                } 
-                else if (currentBuild.currentResult == 'UNSTABLE') {
-                    echo "BUILD UNSTABLE - SOME TESTS FAILED"
-                } 
-                else {
-                    echo "BUILD FAILED"
-                }
-
                 echo "Final Build Status: ${currentBuild.currentResult}"
                 echo "======================================"
             }
