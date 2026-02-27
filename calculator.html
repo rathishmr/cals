@@ -1,33 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Calculator</title>
     <style>
-        #display { width: 200px; height: 30px; text-align: right; font-size: 20px; }
-        button { width: 50px; height: 50px; font-size: 18px; }
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; margin-top: 50px; }
+        #calculator { border: 1px solid #ccc; padding: 20px; border-radius: 8px; width: 250px; }
+        #display { width: 100%; height: 40px; text-align: right; font-size: 24px; margin-bottom: 10px; }
+        .btn { width: 50px; height: 50px; font-size: 18px; margin: 3px; }
+        .row { display: flex; justify-content: space-between; }
     </style>
-    <script>
-        let current = "";
-        function press(val) { current += val; document.getElementById("display").value = current; }
-        function clearDisplay() { current = ""; document.getElementById("display").value = current; }
-        function calculate() {
-            try { current = eval(current).toString(); }
-            catch(e){ current="Error"; }
-            document.getElementById("display").value = current;
-        }
-    </script>
 </head>
 <body>
+<div id="calculator">
     <input type="text" id="display" readonly>
-    <br>
-    <button onclick="press('1')">1</button>
-    <button onclick="press('2')">2</button>
-    <button onclick="press('3')">3</button>
-    <button onclick="press('+')">+</button>
-    <button onclick="press('-')">-</button>
-    <button onclick="press('*')">*</button>
-    <button onclick="press('/')">/</button>
-    <button onclick="calculate()">=</button>
-    <button id="C" onclick="clearDisplay()">C</button>
+
+    <div class="row">
+        <button class="btn" id="7">7</button>
+        <button class="btn" id="8">8</button>
+        <button class="btn" id="9">9</button>
+        <button class="btn" id="/">/</button>
+    </div>
+    <div class="row">
+        <button class="btn" id="4">4</button>
+        <button class="btn" id="5">5</button>
+        <button class="btn" id="6">6</button>
+        <button class="btn" id="*">*</button>
+    </div>
+    <div class="row">
+        <button class="btn" id="1">1</button>
+        <button class="btn" id="2">2</button>
+        <button class="btn" id="3">3</button>
+        <button class="btn" id="-">-</button>
+    </div>
+    <div class="row">
+        <button class="btn" id="0">0</button>
+        <button class="btn" id=".">.</button>
+        <button class="btn" id="C">C</button>
+        <button class="btn" id="+">+</button>
+    </div>
+    <div class="row">
+        <button class="btn" id="=" style="width: 100%">=</button>
+    </div>
+</div>
+
+<script>
+    const display = document.getElementById("display");
+    let current = "";
+
+    function updateDisplay() {
+        display.value = current;
+    }
+
+    document.querySelectorAll(".btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const id = btn.id;
+
+            if (id === "C") {
+                current = "";
+            } else if (id === "=") {
+                try {
+                    current = eval(current).toString();
+                } catch (e) {
+                    current = "Error";
+                }
+            } else {
+                current += id;
+            }
+            updateDisplay();
+        });
+    });
+</script>
 </body>
 </html>
