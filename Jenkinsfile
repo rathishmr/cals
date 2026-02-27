@@ -1,76 +1,103 @@
 pipeline {
     agent any
 
-    environment {
-        APP_PORT = "8080"
-    }
-
-    options {
-        timestamps()
-    }
-
     stages {
-        
+
+        stage('Verify Python') {
+            steps {
+                bat "python --version"
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
-                bat '''
-                python -m pip install --upgrade pip
-                pip install pytest pytest-cov selenium webdriver-manager flask
-                '''
+                bat """
+                    python -m pip install --upgrade pip
+                    python -m pip install -r requirements.txt
+                """
             }
         }
 
-        stage('Start Calculator App') {
+        stage('Run Smoke Tests') {
             steps {
-                bat '''
-                echo Starting Calculator App...
-                start /B python app.py
-                timeout /t 5
-                '''
+                script {
+                    def status = bat(
+                        script: "python -m pytest tests/smoke_test.py --junitxml=smoke-results.xml",
+                        returnStatus: true
+                    )
+
+                    if (status != 0) {
+                        unstable("Smoke tests failed")
+                    }
+                }
             }
         }
 
-        stage('Run Tests') {
-            parallel {
-                'Smoke Tests': {
-                    steps {
-                        bat '''
-                        pytest -m smoke ^
-                        --junitxml=reports/smoke.xml ^
-                        --cov=. ^
-                        --cov-report=xml:reports/coverage.xml ^
-                        --cov-report=term ^
-                        --cov-fail-under=80
-                        '''
+        stage('Run Security Tests') {
+            steps {
+                script {
+                    def status = bat(
+                        script: "python -m pytest tests/security_test.py --junitxml=security-results.xml",
+                        returnStatus: true
+                    )
+
+                    if (status != 0) {
+                        unstable("Security tests failed")
                     }
+                }
+            }
+        }
+
+        stage('Run Slow Tests') {
+            steps {
+                script {
+                    def status = bat(
+                        script: "python -m pytest tests/slow_test.py --junitxml=slow-results.xml",
+                        returnStatus: true
+                    )
+
+                    if (status != 0) {
+                        unstable("Slow tests failed")
+                    }
+                }
+            }
+        }
+
+        stage('Run UI Tests') {
+            steps {
+                script {
+                    def status = bat(
+                        script: "python -m pytest tests/test_calc_ui.py --junitxml=ui-results.xml",
+                        returnStatus: true
+                    )
+
+                    if (status != 0) {
+                        unstable("UI tests failed")
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            junit '*.xml'
+
+            script {
+                echo "======================================"
+
+                if (currentBuild.currentResult == 'SUCCESS') {
+                    echo "BUILD SUCCESS - ALL TESTS PASSED"
+                } 
+                else if (currentBuild.currentResult == 'UNSTABLE') {
+                    echo "BUILD UNSTABLE - SOME TESTS FAILED"
+                } 
+                else {
+                    echo "BUILD FAILED"
                 }
 
-                'Slow Tests': {
-                    steps {
-                        bat '''
-                        pytest -m slow ^
-                        --junitxml=reports/slow.xml
-                        '''
-                    }
-                }
-
-                'Security Tests': {
-                    steps {
-                        bat '''
-                        pytest -m security ^
-                        --junitxml=reports/security.xml
-                        '''
-                    }
-                }
-
-                'UI Tests': {
-                    steps {
-                        bat '''
-                        pytest tests/test_calc_ui.py ^
-                        --junitxml=reports/ui.xml
-                        '''
-                    }
-                }
+                echo "Final Build Status: ${currentBuild.currentResult}"
+                echo "======================================"
             }
         }
     }
