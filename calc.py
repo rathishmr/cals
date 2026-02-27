@@ -20,8 +20,22 @@ class CalculatorLogic:
     def evaluate(self, expression: str) -> str:
         try:
             parsed = ast.parse(expression, mode="eval")
+
+            # 🚨 HARD SECURITY BLOCK
+            for node in ast.walk(parsed):
+                if isinstance(node, (
+                    ast.Call,
+                    ast.Attribute,
+                    ast.Name,
+                    ast.Lambda,
+                    ast.Import,
+                    ast.ImportFrom,
+                )):
+                    return "Error"
+
             result = self._safe_eval(parsed.body)
             return str(result)
+
         except Exception:
             return "Error"
 
@@ -30,11 +44,11 @@ class CalculatorLogic:
         if isinstance(node, ast.Constant):
             if isinstance(node.value, (int, float)):
                 return node.value
-            raise ValueError("Invalid constant")
+            raise ValueError
 
         elif isinstance(node, ast.BinOp):
             if type(node.op) not in self.OPERATORS:
-                raise ValueError("Operator not allowed")
+                raise ValueError
 
             left = self._safe_eval(node.left)
             right = self._safe_eval(node.right)
@@ -43,13 +57,13 @@ class CalculatorLogic:
 
         elif isinstance(node, ast.UnaryOp):
             if type(node.op) not in self.OPERATORS:
-                raise ValueError("Operator not allowed")
+                raise ValueError
 
             operand = self._safe_eval(node.operand)
             return self.OPERATORS[type(node.op)](operand)
 
         else:
-            raise ValueError("Unsafe expression")
+            raise ValueError
 
 
 # ------------------ UI ------------------
@@ -203,3 +217,4 @@ class Calculator:
 if __name__ == "__main__":
     calc = Calculator()
     calc.run()
+
