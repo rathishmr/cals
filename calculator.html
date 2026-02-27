@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calculator</title>
+    <style>
+        #display { width: 200px; height: 30px; text-align: right; font-size: 20px; }
+        button { width: 50px; height: 50px; font-size: 18px; }
+    </style>
+    <script>
+        let current = "";
+        function press(val) { current += val; document.getElementById("display").value = current; }
+        function clearDisplay() { current = ""; document.getElementById("display").value = current; }
+        function calculate() {
+            try { current = eval(current).toString(); }
+            catch(e){ current="Error"; }
+            document.getElementById("display").value = current;
+        }
+    </script>
+</head>
+<body>
+    <input type="text" id="display" readonly>
+    <br>
+    <button onclick="press('1')">1</button>
+    <button onclick="press('2')">2</button>
+    <button onclick="press('3')">3</button>
+    <button onclick="press('+')">+</button>
+    <button onclick="press('-')">-</button>
+    <button onclick="press('*')">*</button>
+    <button onclick="press('/')">/</button>
+    <button onclick="calculate()">=</button>
+    <button id="C" onclick="clearDisplay()">C</button>
+</body>
+</html>
