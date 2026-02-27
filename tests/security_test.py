@@ -1,31 +1,34 @@
 import pytest
 from calc import CalculatorLogic
 
+
 @pytest.fixture
 def calc():
     return CalculatorLogic()
 
 
 @pytest.mark.security
-def test_import_injection(calc):
-    assert calc.evaluate("__import__('os')") == "Error"
+@pytest.mark.parametrize("malicious_input", [
 
+    # 1️⃣ Import injection attempt
+    "__import__('os')",
 
-@pytest.mark.security
-def test_system_command(calc):
-    assert calc.evaluate("__import__('os').system('ls')") == "Error"
+    # 2️⃣ System command execution attempt
+    "__import__('os').system('dir')",
 
+    # 3️⃣ Lambda execution attempt
+    "(lambda x: x)(5)",
 
-@pytest.mark.security
-def test_lambda_execution(calc):
-    assert calc.evaluate("(lambda x: x)(5)") == "Error"
+    # 4️⃣ Exec statement attempt
+    "exec('print(5)')",
 
+    # 5️⃣ Attribute access attempt
+    "(1).__class__",
 
-@pytest.mark.security
-def test_exec_statement(calc):
-    assert calc.evaluate("exec('print(5)')") == "Error"
-
-
-@pytest.mark.security
-def test_attribute_access(calc):
-    assert calc.evaluate("(1).__class__") == "Error"
+])
+def test_malicious_code_blocked(calc, malicious_input):
+    """
+    Ensure that dangerous or malicious expressions
+    are blocked and return 'Error'
+    """
+    assert calc.evaluate(malicious_input) == "Error"
