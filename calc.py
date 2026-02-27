@@ -13,46 +13,56 @@ LIGHT_BLUE = "#CCEDFF"
 LIGHT_GRAY = "#F5F5F5"
 LABEL_COLOR = "#25265E"
 
+
 class CalculatorLogic:
 
-    allowed_operators = {
+    OPERATORS = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
         ast.Div: operator.truediv,
         ast.Pow: operator.pow,
-        ast.USub: operator.neg
+        ast.Mod: operator.mod,
+        ast.USub: operator.neg,
     }
 
-    def evaluate(self, expression):
+    def evaluate(self, expression: str) -> str:
         try:
-            node = ast.parse(expression, mode='eval')
-            return str(self._evaluate(node.body))
+            parsed = ast.parse(expression, mode="eval")
+            result = self._safe_eval(parsed.body)
+            return str(result)
         except Exception:
             return "Error"
 
-    def _evaluate(self, node):
+    def _safe_eval(self, node):
+
+        # Only allow numbers
         if isinstance(node, ast.Constant):
-            return node.value
+            if isinstance(node.value, (int, float)):
+                return node.value
+            raise ValueError("Invalid constant")
 
+        # Binary operations (+ - * / ** %)
         elif isinstance(node, ast.BinOp):
-            if type(node.op) not in self.allowed_operators:
+            if type(node.op) not in self.OPERATORS:
                 raise ValueError("Operator not allowed")
 
-            left = self._evaluate(node.left)
-            right = self._evaluate(node.right)
+            left = self._safe_eval(node.left)
+            right = self._safe_eval(node.right)
 
-            return self.allowed_operators[type(node.op)](left, right)
+            return self.OPERATORS[type(node.op)](left, right)
 
+        # Unary negative (-5)
         elif isinstance(node, ast.UnaryOp):
-            if type(node.op) not in self.allowed_operators:
+            if type(node.op) not in self.OPERATORS:
                 raise ValueError("Operator not allowed")
 
-            operand = self._evaluate(node.operand)
-            return self.allowed_operators[type(node.op)](operand)
+            operand = self._safe_eval(node.operand)
+            return self.OPERATORS[type(node.op)](operand)
 
+        # BLOCK EVERYTHING ELSE
         else:
-            raise ValueError("Invalid expression")
+            raise ValueError("Unsafe expression")
 
 class Calculator:
     def __init__(self):
@@ -207,5 +217,6 @@ class Calculator:
 if __name__ == "__main__":
     calc = Calculator()
     calc.run()
+
 
 
