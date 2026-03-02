@@ -1,5 +1,6 @@
 import ast
 import operator
+import math
 
 
 # ------------------ LOGIC ------------------
@@ -65,5 +66,24 @@ class CalculatorLogic:
             raise ValueError
 
 
+    def square(self, value: str) -> str:
+        """
+        Returns square of a number.
+        """
+        try:
+            num = float(value)
+            return str(num ** 2)
+        except Exception:
+            return "Error"
 
-
+    def sqrt(self, value: str) -> str:
+        """
+        Returns square root of a number.
+        """
+        try:
+            num = float(value)
+            if num < 0:
+                return "Error"
+            return str(math.sqrt(num))
+        except Exception:
+            return "Error"
