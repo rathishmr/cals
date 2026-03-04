@@ -10,19 +10,14 @@ def calc():
 @pytest.mark.security
 @pytest.mark.parametrize("malicious_input", [
 
-    # 1️⃣ Import injection attempt
     "__import__('os')",
 
-    # 2️⃣ System command execution attempt
     "__import__('os').system('dir')",
 
-    # 3️⃣ Lambda execution attempt
     "(lambda x: x)(5)",
 
-    # 4️⃣ Exec statement attempt
     "exec('print(5)')",
 
-    # 5️⃣ Attribute access attempt
     "(1).__class__",
 
 ])
