@@ -3,9 +3,8 @@ pipeline {
 
     stages {
 
-        stage('Build Freestyle Project (Clone Repo)') {
+        stage('Build Freestyle Project') {
             steps {
-                // Trigger python-test but DO NOT fail pipeline if it fails
                 build job: 'python-test', propagate: false
             }
         }
@@ -87,7 +86,7 @@ pipeline {
             }
         }
 
-        stage('Debug XML (Optional – remove later)') {
+        stage('Debug XML') {
             steps {
                 bat "dir *.xml"
             }
@@ -96,7 +95,6 @@ pipeline {
 
     post {
         always {
-            // This prevents crash when XML files don't exist
             junit allowEmptyResults: true, testResults: '*.xml'
 
             echo "======================================"
