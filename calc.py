@@ -1,7 +1,5 @@
 import ast
 import operator
-import math
-
 
 # ------------------ LOGIC ------------------
 
@@ -64,4 +62,5 @@ class CalculatorLogic:
 
         else:
             raise ValueError
+
 
