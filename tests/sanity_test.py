@@ -1,5 +1,5 @@
 import pytest
-from calc_v2 import ScientificCalculator
+from calc2 import ScientificCalculator
 
 
 @pytest.fixture
