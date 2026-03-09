@@ -43,11 +43,20 @@ pipeline {
                         bat "python -m pytest tests/security_test.py --junitxml=b1-security.xml"
                     }
                 }
+                
+                stage('Slow Tests') {
+                    steps {
+                        bat "python -m pytest tests/slow_test.py --junitxml=b1-slow.xml"
+                    }
+                }
 
+                stage('UI Tests') {
+                    steps {
+                        bat "python -m pytest tests/test_calc_ui.py --junitxml=b1-ui.xml"
+                    }
+                }
             }
         }
-
-        
 
         // ---------------- UPGRADE ----------------
 
@@ -71,7 +80,19 @@ pipeline {
                         bat "python -m pytest tests/sanity_test.py --junitxml=b2-sanity.xml"
                     }
                 }
+                
+                stage('Smoke Tests') {
+                    steps {
+                        bat "python -m pytest tests/smoke_test.py --junitxml=b2-smoke.xml"
+                    }
+                }
 
+                stage('Security Tests') {
+                    steps {
+                        bat "python -m pytest tests/security_test.py --junitxml=b2-security.xml"
+                    }
+                }
+                
                 stage('Slow Tests') {
                     steps {
                         bat "python -m pytest tests/slow_test.py --junitxml=b2-slow.xml"
@@ -83,7 +104,6 @@ pipeline {
                         bat "python -m pytest tests/test_calc_ui.py --junitxml=b2-ui.xml"
                     }
                 }
-
             }
         }
     }
