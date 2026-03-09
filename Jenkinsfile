@@ -3,156 +3,87 @@ pipeline {
 
     stages {
 
-        stage('Build Freestyle Project') {
+        stage('Prepare Workspace') {
             steps {
                 build job: 'python-test', propagate: false
-            }
-        }
-
-        stage('Clean Pipeline Workspace') {
-            steps {
                 deleteDir()
-            }
-        }
 
-        stage('Copy Source From python-test Workspace') {
-            steps {
                 bat """
-                    xcopy /E /I /Y "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\python-test\\*" .
+                xcopy /E /I /Y "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\python-test\\*" .
                 """
-            }
-        }
-
-        stage('Verify Python') {
-            steps {
-                bat "python --version"
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 bat """
-                    python -m pip install --upgrade pip
-                    python -m pip install -r requirements.txt
+                python -m pip install --upgrade pip
+                python -m pip install -r requirements.txt
                 """
             }
         }
 
-        // =====================================
-        // BUILD 1 : SIMPLE CALCULATOR
-        // =====================================
+        // ---------------- BUILD 1 ----------------
 
-        stage('Build 1 - Simple Calculator') {
-            steps {
-                echo "Running tests on Simple Calculator (calc.py)"
+        stage('Build 1 - Simple Calculator Tests') {
+            environment {
+                CALC_MODULE = "calc"
             }
-        }
 
-        stage('Build 1 - Smoke Tests') {
-            steps {
-                script {
-                    def status = bat(
-                        script: "python -m pytest tests/smoke_test.py --junitxml=b1-smoke.xml",
-                        returnStatus: true
-                    )
-                    if (status != 0) { unstable("Build1 Smoke tests failed") }
+            parallel {
+
+                stage('Smoke Tests') {
+                    steps {
+                        bat "python -m pytest tests/smoke_test.py --junitxml=b1-smoke.xml"
+                    }
                 }
-            }
-        }
 
-        stage('Build 1 - Security Tests') {
-            steps {
-                script {
-                    def status = bat(
-                        script: "python -m pytest tests/security_test.py --junitxml=b1-security.xml",
-                        returnStatus: true
-                    )
-                    if (status != 0) { unstable("Build1 Security tests failed") }
+                stage('Security Tests') {
+                    steps {
+                        bat "python -m pytest tests/security_test.py --junitxml=b1-security.xml"
+                    }
                 }
-            }
-        }
 
-        // =====================================
-        // BACKUP ORIGINAL CALCULATOR
-        // =====================================
-
-        stage('Backup Original Calculator') {
-            steps {
-                echo "Backing up calc.py before upgrade"
-                bat "copy /Y calc.py calc_backup.py"
-            }
-        }
-
-        // =====================================
-        // BUILD 2 : SCIENTIFIC CALCULATOR
-        // =====================================
-
-        stage('Upgrade to Scientific Calculator') {
-            steps {
-                echo "Switching to calc2.py for Build 2"
-
-                bat """
-                    copy /Y calc2.py calc.py
-                """
-            }
-        }
-        
-        // =====================================
-        // RESTORE ORIGINAL CALCULATOR
-        // =====================================
-
-        stage('Restore Original Calculator') {
-            steps {
-                echo "Restoring original calc.py"
-
-                bat """
-                    copy /Y calc_backup.py calc.py
-                    del calc_backup.py
-                """
-            }
-        }
-
-        stage('Build 2 - Sanity Tests (Scientific Features)') {
-            steps {
-                script {
-                    def status = bat(
-                        script: "python -m pytest tests/sanity_test.py --junitxml=b2-sanity.xml",
-                        returnStatus: true
-                    )
-                    if (status != 0) { unstable("Build2 Sanity tests failed") }
-                }
-            }
-        }
-
-        stage('Build 2 - Slow Tests') {
-            steps {
-                script {
-                    def status = bat(
-                        script: "python -m pytest tests/slow_test.py --junitxml=b2-slow.xml",
-                        returnStatus: true
-                    )
-                    if (status != 0) { unstable("Build2 Slow tests failed") }
-                }
-            }
-        }
-
-        stage('Build 2 - UI Tests') {
-            steps {
-                script {
-                    def status = bat(
-                        script: "python -m pytest tests/test_calc_ui.py --junitxml=b2-ui.xml",
-                        returnStatus: true
-                    )
-                    if (status != 0) { unstable("Build2 UI tests failed") }
-                }
             }
         }
 
         
 
-        stage('Debug XML Results') {
+        // ---------------- UPGRADE ----------------
+
+        stage('Upgrade to Scientific Version') {
             steps {
-                bat "dir *.xml"
+                echo "Switching to ScientificCalculator for Build 2"
+            }
+        }
+
+        // ---------------- BUILD 2 ----------------
+
+        stage('Build 2 - Scientific Calculator Tests') {
+            environment {
+                CALC_MODULE = "calc2"
+            }
+
+            parallel {
+
+                stage('Sanity Tests') {
+                    steps {
+                        bat "python -m pytest tests/sanity_test.py --junitxml=b2-sanity.xml"
+                    }
+                }
+
+                stage('Slow Tests') {
+                    steps {
+                        bat "python -m pytest tests/slow_test.py --junitxml=b2-slow.xml"
+                    }
+                }
+
+                stage('UI Tests') {
+                    steps {
+                        bat "python -m pytest tests/test_calc_ui.py --junitxml=b2-ui.xml"
+                    }
+                }
+
             }
         }
     }
@@ -160,10 +91,6 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: "*.xml"
-
-            echo "======================================"
-            echo "Final Build Status: ${currentBuild.currentResult}"
-            echo "======================================"
         }
     }
 }
