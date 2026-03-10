@@ -10,11 +10,11 @@ def driver():
 
     chrome_options = Options()
 
+    # Run visible browser for manual testing
     chrome_options.add_argument("--window-size=1200,800")
 
     driver = webdriver.Chrome(options=chrome_options)
 
-    # open calculator.html
     file_path = os.path.abspath("calculator.html")
     driver.get("file:///" + file_path.replace("\\", "/"))
 
@@ -26,17 +26,22 @@ def driver():
 @pytest.mark.ui
 def test_manual_ui(driver):
 
+    # Skip in CI environments like Jenkins
+    if os.environ.get("JENKINS_HOME"):
+        pytest.skip("Skipping manual UI test in CI environment")
+
     print("\n====================================")
     print("Calculator opened in browser")
-    print("You can now test UI manually")
-    print("Try operations like:")
-    print(" 1 + 2 =")
-    print(" 5 * 3 =")
-    print(" sqrt 16")
-    print(" factorial 5")
-    print("Press ENTER in terminal when finished")
+    print("Test UI manually now")
+    print("Try examples:")
+    print("1 + 2 =")
+    print("5 * 3 =")
+    print("sqrt 16")
+    print("factorial 5")
+    print("Browser will stay open for 60 seconds")
     print("====================================\n")
 
-    input("Press ENTER after finishing manual testing...")
+    # wait for manual interaction
+    time.sleep(60)
 
     assert True
