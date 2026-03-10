@@ -1,75 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Calculator</title>
-    <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; margin-top: 50px; }
-        #calculator { border: 1px solid #ccc; padding: 20px; border-radius: 8px; width: 250px; }
-        #display { width: 100%; height: 40px; text-align: right; font-size: 24px; margin-bottom: 10px; }
-        .btn { width: 50px; height: 50px; font-size: 18px; margin: 3px; }
-        .row { display: flex; justify-content: space-between; }
-    </style>
-</head>
-<body>
-<div id="calculator">
-    <input type="text" id="display" readonly>
+<meta charset="UTF-8">
+<title>Calculator</title>
 
-    <div class="row">
-        <button class="btn" id="7">7</button>
-        <button class="btn" id="8">8</button>
-        <button class="btn" id="9">9</button>
-        <button class="btn" id="/">/</button>
-    </div>
-    <div class="row">
-        <button class="btn" id="4">4</button>
-        <button class="btn" id="5">5</button>
-        <button class="btn" id="6">6</button>
-        <button class="btn" id="*">*</button>
-    </div>
-    <div class="row">
-        <button class="btn" id="1">1</button>
-        <button class="btn" id="2">2</button>
-        <button class="btn" id="3">3</button>
-        <button class="btn" id="-">-</button>
-    </div>
-    <div class="row">
-        <button class="btn" id="0">0</button>
-        <button class="btn" id=".">.</button>
-        <button class="btn" id="C">C</button>
-        <button class="btn" id="+">+</button>
-    </div>
-    <div class="row">
-        <button class="btn" id="=" style="width: 100%">=</button>
-    </div>
+<style>
+body{
+    font-family: Arial;
+    display:flex;
+    justify-content:center;
+    margin-top:50px;
+}
+
+#calculator{
+    border:1px solid #ccc;
+    padding:20px;
+    border-radius:8px;
+    width:280px;
+}
+
+#display{
+    width:100%;
+    height:40px;
+    text-align:right;
+    font-size:24px;
+    margin-bottom:10px;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+}
+
+.btn{
+    width:60px;
+    height:45px;
+    font-size:16px;
+    margin:3px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="calculator">
+
+<input type="text" id="display" readonly>
+
+<!-- Scientific Row -->
+<div class="row">
+<button class="btn" id="square">x²</button>
+<button class="btn" id="sqrt">√</button>
+<button class="btn" id="sin">sin</button>
+<button class="btn" id="log">log</button>
+</div>
+
+<div class="row">
+<button class="btn" id="7">7</button>
+<button class="btn" id="8">8</button>
+<button class="btn" id="9">9</button>
+<button class="btn" id="/">/</button>
+</div>
+
+<div class="row">
+<button class="btn" id="4">4</button>
+<button class="btn" id="5">5</button>
+<button class="btn" id="6">6</button>
+<button class="btn" id="*">*</button>
+</div>
+
+<div class="row">
+<button class="btn" id="1">1</button>
+<button class="btn" id="2">2</button>
+<button class="btn" id="3">3</button>
+<button class="btn" id="-">-</button>
+</div>
+
+<div class="row">
+<button class="btn" id="0">0</button>
+<button class="btn" id=".">.</button>
+<button class="btn" id="C">C</button>
+<button class="btn" id="+">+</button>
+</div>
+
+<div class="row">
+<button class="btn" id="fact">n!</button>
+<button class="btn" id="=" style="width:190px">=</button>
+</div>
+
 </div>
 
 <script>
-    const display = document.getElementById("display");
-    let current = "";
 
-    function updateDisplay() {
-        display.value = current;
-    }
+const display = document.getElementById("display");
+let current = "";
+let resetNext = false;
 
-    document.querySelectorAll(".btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const id = btn.id;
+function updateDisplay(){
+    display.value = current;
+}
 
-            if (id === "C") {
-                current = "";
-            } else if (id === "=") {
-                try {
-                    current = eval(current).toString();
-                } catch (e) {
-                    current = "Error";
-                }
-            } else {
-                current += id;
+function factorial(n){
+    if(n<=1) return 1;
+    return n * factorial(n-1);
+}
+
+document.querySelectorAll(".btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+
+        const id = btn.id;
+
+        if(id==="C"){
+            current="";
+        }
+
+        else if(id==="="){
+            try{
+                current=eval(current).toString();
+                resetNext=true;
             }
-            updateDisplay();
-        });
-    });
+            catch{
+                current="Error";
+            }
+        }
+
+        else if(id==="square"){
+            current=(Math.pow(parseFloat(current),2)).toString();
+        }
+
+        else if(id==="sqrt"){
+            current=(Math.sqrt(parseFloat(current))).toString();
+        }
+
+        else if(id==="sin"){
+            current=(Math.sin(parseFloat(current)*Math.PI/180)).toString();
+        }
+
+        else if(id==="log"){
+            current=(Math.log10(parseFloat(current))).toString();
+        }
+
+        else if(id==="fact"){
+            current=(factorial(parseInt(current))).toString();
+        }
+
+        else{
+
+            if(resetNext){
+                current="";
+                resetNext=false;
+            }
+
+            current+=id;
+        }
+
+        updateDisplay();
+    })
+})
+
 </script>
+
 </body>
 </html>
