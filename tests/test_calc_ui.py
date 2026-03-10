@@ -35,20 +35,16 @@ def click_buttons(driver, buttons):
     wait = WebDriverWait(driver, 5)
 
     for button in buttons:
-        element = wait.until(
-            EC.element_to_be_clickable((By.ID, button))
-        )
+        element = wait.until(EC.element_to_be_clickable((By.ID, button)))
         element.click()
 
 
 def get_display(driver):
-
     display = driver.find_element(By.ID, "display")
     return display.get_attribute("value")
 
 
 def clear_display(driver):
-
     driver.find_element(By.ID, "C").click()
 
 
@@ -62,21 +58,14 @@ def clear_display(driver):
     (["8", "/", "2", "="], "4"),
 ])
 def test_calculator_operations(driver, buttons, expected):
-
     clear_display(driver)
-
     click_buttons(driver, buttons)
-
     assert get_display(driver) == expected
 
 
 @pytest.mark.ui
 def test_clear(driver):
-
     clear_display(driver)
-
     click_buttons(driver, ["9", "+", "1"])
-
     clear_display(driver)
-
     assert get_display(driver) == ""
