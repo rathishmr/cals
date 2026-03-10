@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 import os
 
 
-@pytest.fixture(scope="function")  
+@pytest.fixture(scope="module")
 def driver():
     chrome_options = Options()
 
@@ -24,38 +24,32 @@ def driver():
     driver.quit()
 
 
+# Helper Functions
+
 def click_buttons(driver, buttons):
-    for b in buttons:
-        driver.find_element(By.ID, b).click()
+    for button in buttons:
+        driver.find_element(By.ID, button).click()
 
 
 def get_display(driver):
     return driver.find_element(By.ID, "display").get_attribute("value")
 
 
-@pytest.mark.ui
-def test_add(driver):
-    click_buttons(driver, ["1", "+", "2", "="])
-    assert get_display(driver) == "3"
-
+# UI Operation Tests
 
 @pytest.mark.ui
-def test_sub(driver):
-    click_buttons(driver, ["5", "-", "3", "="])
-    assert get_display(driver) == "2"
+@pytest.mark.parametrize("buttons, expected", [
+    (["1", "+", "2", "="], "3"),
+    (["5", "-", "3", "="], "2"),
+    (["4", "*", "2", "="], "8"),
+    (["8", "/", "2", "="], "4"),
+])
+def test_calculator_operations(driver, buttons, expected):
+    click_buttons(driver, buttons)
+    assert get_display(driver) == expected
 
 
-@pytest.mark.ui
-def test_mul(driver):
-    click_buttons(driver, ["4", "*", "2", "="])
-    assert get_display(driver) == "8"
-
-
-@pytest.mark.ui
-def test_div(driver):
-    click_buttons(driver, ["8", "/", "2", "="])
-    assert get_display(driver) == "4"
-
+# Clear Button Test
 
 @pytest.mark.ui
 def test_clear(driver):
