@@ -35,7 +35,11 @@ def get_display(driver):
     return driver.find_element(By.ID, "display").get_attribute("value")
 
 
-# UI Operation Tests
+def clear_display(driver):
+    driver.find_element(By.ID, "C").click()
+
+
+# Calculator Operation Tests
 
 @pytest.mark.ui
 @pytest.mark.parametrize("buttons, expected", [
@@ -45,7 +49,11 @@ def get_display(driver):
     (["8", "/", "2", "="], "4"),
 ])
 def test_calculator_operations(driver, buttons, expected):
+
+    clear_display(driver)   # 🔹 important fix
+
     click_buttons(driver, buttons)
+
     assert get_display(driver) == expected
 
 
@@ -53,6 +61,9 @@ def test_calculator_operations(driver, buttons, expected):
 
 @pytest.mark.ui
 def test_clear(driver):
+
     click_buttons(driver, ["9", "+", "1"])
-    driver.find_element(By.ID, "C").click()
+
+    clear_display(driver)
+
     assert get_display(driver) == ""
