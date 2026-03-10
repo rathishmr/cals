@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Calculator</title>
+<title>Universal Calculator</title>
 
 <style>
 body{
@@ -16,12 +16,13 @@ body{
     border:1px solid #ccc;
     padding:20px;
     border-radius:8px;
-    width:280px;
+    width:300px;
+    background:#f9f9f9;
 }
 
 #display{
     width:100%;
-    height:40px;
+    height:45px;
     text-align:right;
     font-size:24px;
     margin-bottom:10px;
@@ -33,10 +34,11 @@ body{
 }
 
 .btn{
-    width:60px;
+    width:65px;
     height:45px;
     font-size:16px;
     margin:3px;
+    cursor:pointer;
 }
 </style>
 </head>
@@ -47,7 +49,7 @@ body{
 
 <input type="text" id="display" readonly>
 
-<!-- Scientific Row -->
+<!-- Scientific Functions -->
 <div class="row">
 <button class="btn" id="square">x²</button>
 <button class="btn" id="sqrt">√</button>
@@ -85,7 +87,7 @@ body{
 
 <div class="row">
 <button class="btn" id="fact">n!</button>
-<button class="btn" id="=" style="width:190px">=</button>
+<button class="btn" id="=" style="width:200px">=</button>
 </div>
 
 </div>
@@ -93,70 +95,109 @@ body{
 <script>
 
 const display = document.getElementById("display");
-let current = "";
-let resetNext = false;
+
+let expression = "";
+let lastResult = false;
 
 function updateDisplay(){
-    display.value = current;
+    display.value = expression;
 }
 
 function factorial(n){
-    if(n<=1) return 1;
-    return n * factorial(n-1);
+    if(n < 0) return "Error";
+    if(n === 0 || n === 1) return 1;
+
+    let result = 1;
+    for(let i=2;i<=n;i++){
+        result *= i;
+    }
+    return result;
 }
 
 document.querySelectorAll(".btn").forEach(btn=>{
+
     btn.addEventListener("click",()=>{
 
-        const id = btn.id;
+        const value = btn.id;
 
-        if(id==="C"){
-            current="";
+        if(value==="C"){
+            expression="";
+            lastResult=false;
         }
 
-        else if(id==="="){
+        else if(value==="="){
+
             try{
-                current=eval(current).toString();
-                resetNext=true;
+                expression = eval(expression).toString();
+                lastResult=true;
             }
             catch{
-                current="Error";
+                expression="Error";
             }
+
         }
 
-        else if(id==="square"){
-            current=(Math.pow(parseFloat(current),2)).toString();
+        else if(value==="square"){
+
+            if(expression!==""){
+                expression = Math.pow(parseFloat(expression),2).toString();
+                lastResult=true;
+            }
+
         }
 
-        else if(id==="sqrt"){
-            current=(Math.sqrt(parseFloat(current))).toString();
+        else if(value==="sqrt"){
+
+            if(expression!==""){
+                expression = Math.sqrt(parseFloat(expression)).toString();
+                lastResult=true;
+            }
+
         }
 
-        else if(id==="sin"){
-            current=(Math.sin(parseFloat(current)*Math.PI/180)).toString();
+        else if(value==="sin"){
+
+            if(expression!==""){
+                expression = Math.sin(parseFloat(expression)*Math.PI/180).toString();
+                lastResult=true;
+            }
+
         }
 
-        else if(id==="log"){
-            current=(Math.log10(parseFloat(current))).toString();
+        else if(value==="log"){
+
+            if(expression!==""){
+                expression = Math.log10(parseFloat(expression)).toString();
+                lastResult=true;
+            }
+
         }
 
-        else if(id==="fact"){
-            current=(factorial(parseInt(current))).toString();
+        else if(value==="fact"){
+
+            if(expression!==""){
+                expression = factorial(parseInt(expression)).toString();
+                lastResult=true;
+            }
+
         }
 
         else{
 
-            if(resetNext){
-                current="";
-                resetNext=false;
+            if(lastResult){
+                expression="";
+                lastResult=false;
             }
 
-            current+=id;
+            expression += value;
+
         }
 
         updateDisplay();
-    })
-})
+
+    });
+
+});
 
 </script>
 
