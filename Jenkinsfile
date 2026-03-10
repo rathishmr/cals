@@ -4,8 +4,8 @@ pipeline {
     parameters {
         booleanParam(name: 'RUN_SMOKE', defaultValue: true, description: 'Run Smoke Tests')
         booleanParam(name: 'RUN_SECURITY', defaultValue: true, description: 'Run Security Tests')
-        booleanParam(name: 'RUN_SLOW', defaultValue: false, description: 'Run Slow Tests')
-        booleanParam(name: 'RUN_UI', defaultValue: false, description: 'Run UI Tests')
+        booleanParam(name: 'RUN_SLOW', defaultValue: true, description: 'Run Slow Tests')
+        booleanParam(name: 'RUN_UI', defaultValue: true, description: 'Run UI Tests')
         booleanParam(name: 'RUN_SANITY', defaultValue: true, description: 'Run Sanity Tests (Build2)')
     }
 
