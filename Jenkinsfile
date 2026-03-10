@@ -2,25 +2,22 @@ pipeline {
     agent any
 
     parameters {
-        booleanParam(name: 'RUN_SMOKE', defaultValue: true, description: 'Run Smoke Tests')
-        booleanParam(name: 'RUN_SECURITY', defaultValue: true, description: 'Run Security Tests')
-        booleanParam(name: 'RUN_SLOW', defaultValue: true, description: 'Run Slow Tests')
-        booleanParam(name: 'RUN_UI', defaultValue: true, description: 'Run UI Tests')
-        booleanParam(name: 'RUN_SANITY', defaultValue: true, description: 'Run Sanity Tests (Build2)')
+        choice(
+            name: 'TEST_TYPE',
+            choices: ['all','build1','build2','smoke','security','slow','ui','sanity'],
+            description: 'Select build or specific test type to run'
+        )
     }
 
     stages {
 
         stage('Prepare Workspace') {
             steps {
-                build job: 'python-test', propagate: false
                 deleteDir()
-
-                bat """
-                xcopy /E /I /Y "C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\python-test\\*" .
-                """
+                git url: 'https://github.com/rathishmr/cals.git', branch: 'main'
             }
         }
+    
 
         stage('Install Dependencies') {
             steps {
@@ -34,6 +31,10 @@ pipeline {
         // ---------------- BUILD 1 ----------------
 
         stage('Build 1 - Simple Calculator Tests') {
+            when {
+                expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'smoke' || params.TEST_TYPE == 'security' || params.TEST_TYPE == 'slow' || params.TEST_TYPE == 'ui' }
+            }
+
             environment {
                 CALC_MODULE = "calc"
             }
@@ -41,28 +42,28 @@ pipeline {
             parallel {
 
                 stage('Smoke Tests') {
-                    when { expression { params.RUN_SMOKE } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'smoke' } }
                     steps {
                         bat "python -m pytest tests/smoke_test.py --junitxml=b1-smoke.xml"
                     }
                 }
 
                 stage('Security Tests') {
-                    when { expression { params.RUN_SECURITY } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'security' } }
                     steps {
                         bat "python -m pytest tests/security_test.py --junitxml=b1-security.xml"
                     }
                 }
 
                 stage('Slow Tests') {
-                    when { expression { params.RUN_SLOW } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'slow' } }
                     steps {
                         bat "python -m pytest tests/slow_test.py --junitxml=b1-slow.xml"
                     }
                 }
 
                 stage('UI Tests') {
-                    when { expression { params.RUN_UI } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'ui' } }
                     steps {
                         bat "python -m pytest tests/test_calc_ui.py --junitxml=b1-ui.xml"
                     }
@@ -73,6 +74,9 @@ pipeline {
         // ---------------- UPGRADE ----------------
 
         stage('Upgrade to Scientific Version') {
+            when {
+                expression { params.TEST_TYPE != 'build1' }
+            }
             steps {
                 echo "Switching to ScientificCalculator for Build 2"
             }
@@ -81,6 +85,10 @@ pipeline {
         // ---------------- BUILD 2 ----------------
 
         stage('Build 2 - Scientific Calculator Tests') {
+            when {
+                expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'smoke' || params.TEST_TYPE == 'security' || params.TEST_TYPE == 'slow' || params.TEST_TYPE == 'ui' || params.TEST_TYPE == 'sanity' }
+            }
+
             environment {
                 CALC_MODULE = "calc2"
             }
@@ -88,35 +96,35 @@ pipeline {
             parallel {
 
                 stage('Sanity Tests') {
-                    when { expression { params.RUN_SANITY } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'sanity' } }
                     steps {
                         bat "python -m pytest tests/sanity_test.py --junitxml=b2-sanity.xml"
                     }
                 }
 
                 stage('Smoke Tests') {
-                    when { expression { params.RUN_SMOKE } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'smoke' } }
                     steps {
                         bat "python -m pytest tests/smoke_test.py --junitxml=b2-smoke.xml"
                     }
                 }
 
                 stage('Security Tests') {
-                    when { expression { params.RUN_SECURITY } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'security' } }
                     steps {
                         bat "python -m pytest tests/security_test.py --junitxml=b2-security.xml"
                     }
                 }
 
                 stage('Slow Tests') {
-                    when { expression { params.RUN_SLOW } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'slow' } }
                     steps {
                         bat "python -m pytest tests/slow_test.py --junitxml=b2-slow.xml"
                     }
                 }
 
                 stage('UI Tests') {
-                    when { expression { params.RUN_UI } }
+                    when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'ui' } }
                     steps {
                         bat "python -m pytest tests/test_calc_ui.py --junitxml=b2-ui.xml"
                     }
@@ -128,6 +136,11 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: "*.xml"
+
+            echo "======================================"
+            echo "Selected Mode: ${params.TEST_TYPE}"
+            echo "Pipeline Completed"
+            echo "======================================"
         }
     }
 }
