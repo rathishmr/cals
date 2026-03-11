@@ -17,7 +17,7 @@ ops = {
     "/": operator.truediv
 }
 
-numbers = range(1, 6)
+numbers = range(1, 11)
 
 expressions = []
 
