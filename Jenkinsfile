@@ -135,12 +135,42 @@ pipeline {
 
     post {
         always {
-            junit allowEmptyResults: true, testResults: "*.xml"
+            echo "======================================"
+            echo "Publishing Test Results"
+            echo "======================================"
 
+            junit allowEmptyResults: true,
+                  testResults: "**/*.xml",
+                  keepLongStdio: true
+            
+            archiveArtifacts artifacts: '**/*.xml', fingerprint: true
+        }
+
+        success {
             echo "======================================"
+            echo "Build SUCCESS"
             echo "Selected Mode: ${params.TEST_TYPE}"
-            echo "Pipeline Completed"
+            echo "All tests completed successfully"
             echo "======================================"
+        }
+
+        unstable {
+            echo "======================================"
+            echo "Build UNSTABLE"
+            echo "Some tests failed but pipeline continued"
+            echo "======================================"
+        }
+
+        failure {
+            echo "======================================"
+            echo "Build FAILED"
+            echo "Check test reports and console logs"
+            echo "======================================"
+        }
+
+        cleanup {
+            echo "Cleaning workspace..."
+            cleanWs()
         }
     }
 }
