@@ -17,7 +17,6 @@ pipeline {
                 git url: 'https://github.com/rathishmr/cals.git', branch: 'main'
             }
         }
-    
 
         stage('Install Dependencies') {
             steps {
@@ -44,28 +43,28 @@ pipeline {
                 stage('Smoke Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'smoke' } }
                     steps {
-                        bat "python -m pytest tests/smoke_test.py --junitxml=b1-smoke.xml"
+                        bat "python -m pytest tests/smoke_test.py --html=b1-smoke.html --self-contained-html"
                     }
                 }
 
                 stage('Security Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'security' } }
                     steps {
-                        bat "python -m pytest tests/security_test.py --junitxml=b1-security.xml"
+                        bat "python -m pytest tests/security_test.py --html=b1-security.html --self-contained-html"
                     }
                 }
 
                 stage('Slow Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'slow' } }
                     steps {
-                        bat "python -m pytest tests/slow_test.py --junitxml=b1-slow.xml"
+                        bat "python -m pytest tests/slow_test.py --html=b1-slow.html --self-contained-html"
                     }
                 }
 
                 stage('UI Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build1' || params.TEST_TYPE == 'ui' } }
                     steps {
-                        bat "python -m pytest tests/test_calc_ui.py --junitxml=b1-ui.xml"
+                        bat "python -m pytest tests/test_calc_ui.py --html=b1-ui.html --self-contained-html"
                     }
                 }
             }
@@ -98,35 +97,35 @@ pipeline {
                 stage('Sanity Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'sanity' } }
                     steps {
-                        bat "python -m pytest tests/sanity_test.py --junitxml=b2-sanity.xml"
+                        bat "python -m pytest tests/sanity_test.py --html=b2-sanity.html --self-contained-html"
                     }
                 }
 
                 stage('Smoke Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'smoke' } }
                     steps {
-                        bat "python -m pytest tests/smoke_test.py --junitxml=b2-smoke.xml"
+                        bat "python -m pytest tests/smoke_test.py --html=b2-smoke.html --self-contained-html"
                     }
                 }
 
                 stage('Security Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'security' } }
                     steps {
-                        bat "python -m pytest tests/security_test.py --junitxml=b2-security.xml"
+                        bat "python -m pytest tests/security_test.py --html=b2-security.html --self-contained-html"
                     }
                 }
 
                 stage('Slow Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'slow' } }
                     steps {
-                        bat "python -m pytest tests/slow_test.py --junitxml=b2-slow.xml"
+                        bat "python -m pytest tests/slow_test.py --html=b2-slow.html --self-contained-html"
                     }
                 }
 
                 stage('UI Tests') {
                     when { expression { params.TEST_TYPE == 'all' || params.TEST_TYPE == 'build2' || params.TEST_TYPE == 'ui' } }
                     steps {
-                        bat "python -m pytest tests/test_calc_ui.py --junitxml=b2-ui.xml"
+                        bat "python -m pytest tests/test_calc_ui.py --html=b2-ui.html --self-contained-html"
                     }
                 }
             }
@@ -135,42 +134,20 @@ pipeline {
 
     post {
         always {
-            echo "======================================"
-            echo "Publishing Test Results"
-            echo "======================================"
 
-            junit allowEmptyResults: true,
-                  testResults: "**/*.xml",
-                  keepLongStdio: true
-            
-            archiveArtifacts artifacts: '**/*.xml', fingerprint: true
-        }
+            publishHTML([
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: '.',
+                reportFiles: 'b1-smoke.html,b1-security.html,b1-slow.html,b1-ui.html,b2-sanity.html,b2-smoke.html,b2-security.html,b2-slow.html,b2-ui.html',
+                reportName: 'Pytest HTML Reports'
+            ])
 
-        success {
             echo "======================================"
-            echo "Build SUCCESS"
             echo "Selected Mode: ${params.TEST_TYPE}"
-            echo "All tests completed successfully"
+            echo "Pipeline Completed"
             echo "======================================"
-        }
-
-        unstable {
-            echo "======================================"
-            echo "Build UNSTABLE"
-            echo "Some tests failed but pipeline continued"
-            echo "======================================"
-        }
-
-        failure {
-            echo "======================================"
-            echo "Build FAILED"
-            echo "Check test reports and console logs"
-            echo "======================================"
-        }
-
-        cleanup {
-            echo "Cleaning workspace..."
-            cleanWs()
         }
     }
 }
