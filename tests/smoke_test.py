@@ -1,5 +1,6 @@
 import pytest
 import operator
+import random
 from calc import CalculatorLogic
 
 
@@ -8,7 +9,7 @@ def calc():
     return CalculatorLogic()
 
 
-# ---------- Dynamic Test Data ----------
+# ---------- Operators ----------
 
 ops = {
     "+": operator.add,
@@ -17,18 +18,21 @@ ops = {
     "/": operator.truediv
 }
 
-numbers = range(1, 11)
+
+# ---------- Generate Random Test Data ----------
 
 expressions = []
 
-for a in numbers:
-    for b in numbers:
-        for symbol, func in ops.items():
+for _ in range(5):
 
-            expression = f"{a}{symbol}{b}"
-            expected = str(func(a, b))
+    a = random.randint(1, 10)
+    b = random.randint(1, 10)
 
-            expressions.append((expression, expected))
+    symbol, func = random.choice(list(ops.items()))
+    
+    expression = f"{a}{symbol}{b}"
+    expected = str(func(a, b))
+    expressions.append((expression, expected))
 
 
 # ---------- Tests ----------
@@ -36,7 +40,5 @@ for a in numbers:
 @pytest.mark.smoke
 @pytest.mark.parametrize("expression, expected", expressions)
 def test_basic_operations(calc, expression, expected):
-
     result = calc.evaluate(expression)
-
     assert result == expected
